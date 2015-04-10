@@ -156,9 +156,9 @@ public class AppRunnerService extends Service {
         windowManager.addView(mainLayout, params);
 
         // TEST
-        if (!EventBus.getDefault().isRegistered(this)) {
-            EventBus.getDefault().register(this);
-        }
+        //if (!EventBus.getDefault().isRegistered(this)) {
+        //    EventBus.getDefault().register(this);
+        //}
 
 
         mNotifManager = (NotificationManager) AppRunnerService.this.getSystemService(Context.NOTIFICATION_SERVICE);
