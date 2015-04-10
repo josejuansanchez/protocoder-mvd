@@ -190,7 +190,11 @@ public class AppRunnerActivity extends BaseActivity {
     protected void onResume() {
         super.onResume();
 
-        EventBus.getDefault().register(this);
+        // TEST
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
+
 
         if (nfcSupported) {
             mAdapter.enableForegroundDispatch(this, mPendingIntent, null, null);
@@ -224,7 +228,8 @@ public class AppRunnerActivity extends BaseActivity {
     protected void onPause() {
         super.onPause();
 
-        EventBus.getDefault().unregister(this);
+        // TEST
+        //EventBus.getDefault().unregister(this);
 
         if (nfcSupported) {
             mAdapter.disableForegroundDispatch(this);

@@ -63,6 +63,8 @@ public class WelcomeActivity extends AppBaseActivity {
 
         // first time id
         Protocoder.getInstance(this).settings.setId(StrUtils.generateRandomString());
+
+        installExamples();
     }
 
     /**
@@ -142,6 +144,24 @@ public class WelcomeActivity extends AppBaseActivity {
             e.printStackTrace();
         }
         return byteArrayOutputStream.toString();
+    }
+
+    public void installExamples() {
+        // install examples
+        ProjectManager.getInstance().install(this, ProjectManager.getInstance().FOLDER_EXAMPLES, new InstallListener() {
+
+            @Override
+            public void onReady() {
+                // Write mContext shared pref to never come back here
+                SharedPreferences userDetails = getSharedPreferences("org.protocoder", MODE_PRIVATE);
+                userDetails.edit().putBoolean(getResources().getString(R.string.pref_is_first_launch), false).commit();
+                // Start the activity
+                Intent i = new Intent(WelcomeActivity.this, MainActivity.class);
+                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(i);
+            }
+        });
+
     }
 
 }

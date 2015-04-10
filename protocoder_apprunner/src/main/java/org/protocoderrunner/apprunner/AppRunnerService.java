@@ -10,7 +10,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.PixelFormat;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.support.v4.app.NotificationCompat;
@@ -38,6 +37,8 @@ import org.protocoderrunner.events.Events;
 import org.protocoderrunner.project.Project;
 import org.protocoderrunner.project.ProjectManager;
 import org.protocoderrunner.utils.MLog;
+
+import de.greenrobot.event.EventBus;
 
 //stopService 
 //stopSelf 
@@ -154,7 +155,11 @@ public class AppRunnerService extends Service {
 
         windowManager.addView(mainLayout, params);
 
-        //EventBus.getDefault().register(this);
+        // TEST
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
+
 
         mNotifManager = (NotificationManager) AppRunnerService.this.getSystemService(Context.NOTIFICATION_SERVICE);
 

@@ -307,7 +307,11 @@ public class AppRunnerFragment extends Fragment {
         super.onResume();
         MLog.d(TAG, "onResume");
 
-        EventBus.getDefault().register(this);
+        // TEST
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
+
 
         if (onAppStatusListener != null) {
             onAppStatusListener.onResume();
@@ -324,7 +328,8 @@ public class AppRunnerFragment extends Fragment {
         super.onPause();
         MLog.d(TAG, "onPause");
 
-        EventBus.getDefault().unregister(this);
+        // TEST
+        //EventBus.getDefault().unregister(this);
 
         interp.callJsFunction("onPause");
 

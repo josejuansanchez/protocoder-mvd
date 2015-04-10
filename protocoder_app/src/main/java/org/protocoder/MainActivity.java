@@ -154,7 +154,11 @@ public class MainActivity extends AppBaseActivity {
         setScreenAlwaysOn(mProtocoder.settings.getScreenOn());
 
         MLog.d(TAG, "Registering as an EventBus listener in MainActivity");
-        EventBus.getDefault().register(this);
+
+        // TEST
+        if (!EventBus.getDefault().isRegistered(this)) {
+            EventBus.getDefault().register(this);
+        }
 
         mStopServerReceiver = new BroadcastReceiver() {
 
@@ -194,7 +198,9 @@ public class MainActivity extends AppBaseActivity {
     protected void onPause() {
         super.onPause();
 
-        EventBus.getDefault().unregister(this);
+        // TEST
+        //EventBus.getDefault().unregister(this);
+
         unregisterReceiver(mStopServerReceiver);
         fileObserver.stopWatching();
         unregisterReceiver(connectivityChangeReceiver);
