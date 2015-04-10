@@ -55,6 +55,8 @@
         </activity>
 
 
+        <service android:name="org.protocoder.MainService" />
+
         <activity
             android:name="org.protocoder.MainActivity"
             android:label="@string/activity_name"
