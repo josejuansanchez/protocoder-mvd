@@ -55,6 +55,7 @@ import org.protocoderrunner.apprunner.PInterface;
 import org.protocoderrunner.apprunner.api.network.PBluetooth;
 import org.protocoderrunner.apprunner.api.network.PFtpClient;
 import org.protocoderrunner.apprunner.api.network.PFtpServer;
+import org.protocoderrunner.apprunner.api.network.PMqtt;
 import org.protocoderrunner.apprunner.api.network.PSocketIOClient;
 import org.protocoderrunner.apprunner.api.network.PWebSocketClient;
 import org.protocoderrunner.apprunner.api.network.PWebSocketServer;
@@ -694,6 +695,16 @@ public class PNetwork extends PInterface {
         PFtpClient ftpClient = new PFtpClient(getContext());
 
         return ftpClient;
+    }
+
+
+
+    @ProtoMethod(description = "Connect to a MQTT service", example = "")
+    @ProtoMethodParam(params = {})
+    public PMqtt createMqttClient() {
+        PMqtt pMqtt = new PMqtt(getContext());
+
+        return pMqtt;
     }
 
 

@@ -1,0 +1,199 @@
+/*
+* Part of Protocoder http://www.protocoder.org
+* A prototyping platform for Android devices
+*
+* Copyright (C) 2013 Victor Diaz Barrales victormdb@gmail.com
+*
+* Protocoder is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Lesser General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* Protocoder is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU Lesser General Public License
+* along with Protocoder. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
+package org.protocoderrunner.apprunner.api.network;
+
+
+import android.content.Context;
+
+
+import org.fusesource.hawtbuf.Buffer;
+import org.fusesource.hawtbuf.UTF8Buffer;
+import org.fusesource.mqtt.client.Callback;
+import org.fusesource.mqtt.client.CallbackConnection;
+import org.fusesource.mqtt.client.Listener;
+import org.fusesource.mqtt.client.MQTT;
+import org.fusesource.mqtt.client.QoS;
+import org.fusesource.mqtt.client.Topic;
+import org.protocoderrunner.apprunner.PInterface;
+import org.protocoderrunner.apprunner.api.other.WhatIsRunning;
+import org.protocoderrunner.utils.MLog;
+
+import java.net.URISyntaxException;
+
+public class PMqtt extends PInterface {
+
+    private final String TAG = PMqtt.class.getSimpleName();
+
+    String content      = "Message from MqttPublishSample";
+    //iot.eclipse.org
+    String host         = "messagesight.demos.ibm.com";
+    int port            = 1883;
+    String clientId     = "ProtoClient";
+    private MQTT mMqtt;
+    private CallbackConnection connection;
+    private boolean mConnected = false;
+
+
+    public PMqtt(Context c) {
+        super(c);
+
+        WhatIsRunning.getInstance().add(this);
+    }
+
+    public interface ConnectCallback {
+        void event(boolean mConnected);
+    }
+
+    public PMqtt connect(final ConnectCallback callback) {
+        MLog.d(TAG, "connect 1");
+        mMqtt = new MQTT();
+
+        try {
+            mMqtt.setHost(host, port);
+            mMqtt.setClientId(clientId);
+            mMqtt.setCleanSession(true);
+
+            connection = mMqtt.callbackConnection();
+            connection.listener(new Listener() {
+                @Override
+                public void onConnected() {
+                    MLog.d(TAG, "onConnected");
+
+                }
+
+                @Override
+                public void onDisconnected() {
+                    MLog.d(TAG, "onDisconnected");
+
+                }
+
+                @Override
+                public void onPublish(UTF8Buffer utf8Buffer, Buffer buffer, Runnable runnable) {
+                    MLog.d(TAG, "onPublish");
+
+                }
+
+                @Override
+                public void onFailure(Throwable throwable) {
+                    MLog.d(TAG, "onFailure");
+
+                }
+            });
+
+            connection.connect(new Callback<Void>() {
+                @Override
+                public void onSuccess(Void aVoid) {
+                    mConnected = true;
+                    MLog.d(TAG, "onSuccess");
+                    callback.event(mConnected);
+
+                }
+
+                @Override
+                public void onFailure(Throwable throwable) {
+                    mConnected = false;
+                    MLog.d(TAG, "onFailure");
+                    callback.event(mConnected);
+                }
+            });
+            MLog.d(TAG, "connect 2");
+
+
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            MLog.d(TAG, "connect :( 1");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            MLog.d(TAG, "connect :( 2");
+        }
+
+        return this;
+    }
+
+    public interface SubscribeCallback {
+        void event(String data);
+    }
+
+    public PMqtt subscribe(String topicStr, final SubscribeCallback callback) {
+
+        Topic topic = new Topic(topicStr, QoS.AT_MOST_ONCE);
+        Topic[] topics = new Topic[]{topic};
+
+        connection.subscribe(topics, new Callback<byte[]>() {
+            @Override
+            public void onSuccess(byte[] bytes) {
+                String dataString = bytes.toString();
+                MLog.d(TAG, "unSucces subscribe byte " + dataString);
+                callback.event(dataString);
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                MLog.d(TAG, "onFailure");
+
+            }
+        });
+
+        return this;
+    }
+
+
+    public interface OnNewDataCallback {
+        void event(String data);
+    }
+
+    public PMqtt onNewData(OnNewDataCallback onNewDataCallback) {
+
+        return this;
+    }
+
+    public PMqtt publish(String topic, String data) {
+        boolean retain = false;
+
+        connection.publish(topic, data.getBytes(), QoS.AT_MOST_ONCE, retain, new Callback<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                MLog.d(TAG, "onSuccess");
+
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                MLog.d(TAG, "onFailure");
+            }
+        });
+
+        return this;
+    }
+
+    public PMqtt disconnect() {
+        MLog.d(TAG, "disconnect");
+
+        return this;
+    }
+
+    public void stop() {
+        disconnect();
+    }
+
+}
