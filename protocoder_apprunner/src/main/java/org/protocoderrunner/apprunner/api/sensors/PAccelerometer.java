@@ -29,6 +29,7 @@ import android.hardware.SensorManager;
 import org.protocoderrunner.apidoc.annotation.ProtoMethod;
 import org.protocoderrunner.apidoc.annotation.ProtoMethodParam;
 import org.protocoderrunner.apprunner.api.other.WhatIsRunningInterface;
+import org.protocoderrunner.utils.MLog;
 
 public class PAccelerometer extends CustomSensorManager implements WhatIsRunningInterface {
 
@@ -90,8 +91,13 @@ public class PAccelerometer extends CustomSensorManager implements WhatIsRunning
             }
 
         };
+        MLog.d(TAG, "hola listener " + listener);
+
 
         isSupported = sensormanager.registerListener(listener, sensor, speed);
+        MLog.d(TAG, "adios " + isSupported);
+
+
     }
 
 
