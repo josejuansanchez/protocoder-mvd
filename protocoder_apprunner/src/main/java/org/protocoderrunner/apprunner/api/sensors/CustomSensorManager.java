@@ -38,7 +38,7 @@ public class CustomSensorManager {
     public boolean running = false;
     boolean isSupported;
 
-    int speed = SensorManager.SENSOR_DELAY_FASTEST;
+    int speed = SensorManager.SENSOR_DELAY_NORMAL;
 
     Sensor sensor;
     SensorManager sensormanager;

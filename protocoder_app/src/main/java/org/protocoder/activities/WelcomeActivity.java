@@ -70,7 +70,7 @@ public class WelcomeActivity extends AppBaseActivity {
     /**
      * onResume
      */
-    @Override
+//    @Override
     protected void onResume() {
         super.onResume();
         MLog.d(TAG, "onResume");

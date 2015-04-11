@@ -22,9 +22,7 @@ package org.protocoder.activities;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
-import android.support.v4.app.NavUtils;
 import android.support.v7.widget.Toolbar;
-import android.view.View;
 
 import org.protocoder.R;
 import org.protocoderrunner.apprunner.api.other.PLooper;
@@ -81,26 +79,26 @@ public class AppBaseActivity extends BaseActivity {
             mToolbar.setNavigationIcon(R.drawable.abc_ic_ab_back_mtrl_am_alpha);
 
 //            mToolbar.setTitle(R.string.title_activity_settings);
-            mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    NavUtils.navigateUpFromSameTask(AppBaseActivity.this);
-                }
-            });
-        }
+//            mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+//                @Override
+//                public void onClick(View v) {
+//                    NavUtils.navigateUpFromSameTask(AppBaseActivity.this);
+//                }
+//            });
+       }
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        mLoop.start();
+//        mLoop.start();
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        mLoop.stop();
+//        mLoop.stop();
     }
 
     @Override
