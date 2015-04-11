@@ -27,9 +27,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 
-import org.protocoder.MainActivity;
 import org.protocoder.MainService;
 import org.protocoder.R;
 import org.protocoder.appApi.Protocoder;
@@ -54,13 +52,14 @@ public class WelcomeActivity extends AppBaseActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_welcome);
-        setToolbar();
+        // TEST
+        //setContentView(R.layout.activity_welcome);
+        //setToolbar();
         //setToolbarBack();
 
         // Set copyright
-        TextView copyright = (TextView) findViewById(R.id.copyright);
-        copyright.setText(readFile(R.raw.copyright_notice));
+        //TextView copyright = (TextView) findViewById(R.id.copyright);
+        //copyright.setText(readFile(R.raw.copyright_notice));
 
         // first time id
         Protocoder.getInstance(this).settings.setId(StrUtils.generateRandomString());
@@ -113,10 +112,16 @@ public class WelcomeActivity extends AppBaseActivity {
                 // Write mContext shared pref to never come back here
                 SharedPreferences userDetails = getSharedPreferences("org.protocoder", MODE_PRIVATE);
                 userDetails.edit().putBoolean(getResources().getString(R.string.pref_is_first_launch), false).commit();
+
+                // TEST
                 // Start the activity
-                Intent i = new Intent(WelcomeActivity.this, MainActivity.class);
-                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(i);
+                //Intent i = new Intent(WelcomeActivity.this, MainActivity.class);
+                //i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                //startActivity(i);
+
+                // Start the MainService
+                Intent intent = new Intent(WelcomeActivity.this, MainService.class);
+                startService(intent);
             }
         });
 
