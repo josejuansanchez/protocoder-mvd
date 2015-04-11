@@ -49,8 +49,9 @@ public class PMqtt extends PInterface {
     int port            = 1883;
     String clientId     = "ProtoClient";
     private MQTT mMqtt;
-    private CallbackConnection connection;
+    private CallbackConnection mConnection;
     private boolean mConnected = false;
+    private OnNewDataCallback mCallbackData;
 
 
     public PMqtt(Context c) {
@@ -72,38 +73,38 @@ public class PMqtt extends PInterface {
             mMqtt.setClientId(clientId);
             mMqtt.setCleanSession(true);
 
-            connection = mMqtt.callbackConnection();
-            connection.listener(new Listener() {
+            mConnection = mMqtt.callbackConnection();
+            mConnection.listener(new Listener() {
                 @Override
                 public void onConnected() {
-                    MLog.d(TAG, "onConnected");
-
+                    MLog.d(TAG, "mconnection onConnected");
+                    //callback.event(true);
                 }
 
                 @Override
                 public void onDisconnected() {
-                    MLog.d(TAG, "onDisconnected");
-
+                    MLog.d(TAG, "mconnection onDisconnected");
+                    //callback.event(false);
                 }
 
                 @Override
                 public void onPublish(UTF8Buffer utf8Buffer, Buffer buffer, Runnable runnable) {
-                    MLog.d(TAG, "onPublish");
-
+                    MLog.d(TAG, "mconnection onPublish " + utf8Buffer.toString() + " " + buffer.toString());
+                    if(mCallbackData != null) mCallbackData.event(utf8Buffer.toString(), buffer.toString());
                 }
 
                 @Override
                 public void onFailure(Throwable throwable) {
-                    MLog.d(TAG, "onFailure");
-
+                    MLog.d(TAG, "mconnection onFailure");
+                    //callback.event(false);
                 }
             });
 
-            connection.connect(new Callback<Void>() {
+            mConnection.connect(new Callback<Void>() {
                 @Override
                 public void onSuccess(Void aVoid) {
                     mConnected = true;
-                    MLog.d(TAG, "onSuccess");
+                    MLog.d(TAG, "mconnection onSuccess");
                     callback.event(mConnected);
 
                 }
@@ -111,10 +112,11 @@ public class PMqtt extends PInterface {
                 @Override
                 public void onFailure(Throwable throwable) {
                     mConnected = false;
-                    MLog.d(TAG, "onFailure");
+                    MLog.d(TAG, "mconnection onFailure");
                     callback.event(mConnected);
                 }
             });
+
             MLog.d(TAG, "connect 2");
 
 
@@ -139,17 +141,17 @@ public class PMqtt extends PInterface {
         Topic topic = new Topic(topicStr, QoS.AT_MOST_ONCE);
         Topic[] topics = new Topic[]{topic};
 
-        connection.subscribe(topics, new Callback<byte[]>() {
+        mConnection.subscribe(topics, new Callback<byte[]>() {
             @Override
             public void onSuccess(byte[] bytes) {
                 String dataString = bytes.toString();
-                MLog.d(TAG, "unSucces subscribe byte " + dataString);
+                MLog.d(TAG, "subscribe onSuccess byte " + dataString);
                 callback.event(dataString);
             }
 
             @Override
             public void onFailure(Throwable throwable) {
-                MLog.d(TAG, "onFailure");
+                MLog.d(TAG, "subscribe onFailure");
 
             }
         });
@@ -159,10 +161,11 @@ public class PMqtt extends PInterface {
 
 
     public interface OnNewDataCallback {
-        void event(String data);
+        void event(String topic, String data);
     }
 
-    public PMqtt onNewData(OnNewDataCallback onNewDataCallback) {
+    public PMqtt onNewData(OnNewDataCallback callback) {
+        mCallbackData = callback;
 
         return this;
     }
@@ -170,16 +173,16 @@ public class PMqtt extends PInterface {
     public PMqtt publish(String topic, String data) {
         boolean retain = false;
 
-        connection.publish(topic, data.getBytes(), QoS.AT_MOST_ONCE, retain, new Callback<Void>() {
+        mConnection.publish(topic, data.getBytes(), QoS.AT_MOST_ONCE, retain, new Callback<Void>() {
             @Override
             public void onSuccess(Void aVoid) {
-                MLog.d(TAG, "onSuccess");
+                MLog.d(TAG, "publish onSuccess");
 
             }
 
             @Override
             public void onFailure(Throwable throwable) {
-                MLog.d(TAG, "onFailure");
+                MLog.d(TAG, "publish onFailure");
             }
         });
 
@@ -188,6 +191,17 @@ public class PMqtt extends PInterface {
 
     public PMqtt disconnect() {
         MLog.d(TAG, "disconnect");
+        mConnection.disconnect(new Callback<Void>() {
+            @Override
+            public void onSuccess(Void value) {
+                MLog.d(TAG, "disconnect onSuccess");
+            }
+
+            @Override
+            public void onFailure(Throwable value) {
+                MLog.d(TAG, "failure onFailure");
+            }
+        });
 
         return this;
     }
