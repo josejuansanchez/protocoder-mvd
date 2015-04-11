@@ -20,32 +20,23 @@
 
 package org.protocoder.appApi;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Color;
-import android.net.Uri;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.view.View;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import org.protocoder.R;
-import org.protocoder.fragments.NewProjectDialogFragment;
 import org.protocoder.projectlist.ProjectItem;
 import org.protocoder.projectlist.ProjectListFragment;
 import org.protocoder.projectlist.ProjectsPagerAdapter;
-import org.protocoder.projectlist.ZoomOutPageTransformer;
-import org.protocoderrunner.apprunner.AppRunnerActivity;
 import org.protocoderrunner.apprunner.AppRunnerService;
 import org.protocoderrunner.apprunner.api.PUtil;
+import org.protocoderrunner.events.Events;
 import org.protocoderrunner.project.Project;
 import org.protocoderrunner.project.ProjectManager;
-import org.protocoderrunner.utils.AndroidUtils;
 import org.protocoderrunner.utils.MLog;
 
-import java.io.File;
+import de.greenrobot.event.EventBus;
 
 public class ProtoScripts {
 
@@ -68,81 +59,9 @@ public class ProtoScripts {
         init();
     }
 
-    private void selectProjects() {
-        tProjects.setTextColor(Color.parseColor("#88000000"));
-        tExamples.setTextColor(Color.parseColor("#55000000"));
-    }
-
-    private void selectExamples() {
-        tProjects.setTextColor(Color.parseColor("#55000000"));
-        tExamples.setTextColor(Color.parseColor("#88000000"));
-    }
-
-
     public void init() {
-        //init views
-        mProjectPagerAdapter = new ProjectsPagerAdapter(mProtocoder.mActivityContext, mProtocoder.mActivityContext.getSupportFragmentManager());
-
-        // final ProjectSelectorStrip strip = (ProjectSelectorStrip) mProtocoder.mActivityContext.findViewById(R.id.pager_title_strip);
-
-        mViewPager = (ViewPager) mProtocoder.mActivityContext.findViewById(R.id.pager);
-
-        mViewPager.setAdapter(mProjectPagerAdapter);
-        mViewPager.setPageTransformer(true, new ZoomOutPageTransformer());
-
-        //final SlidingTabLayout mSlidingTabLayout = (SlidingTabLayout) mProtocoder.mActivityContext.findViewById(R.id.sliding_tabs);
-        //mSlidingTabLayout.setDistributeEvenly(true);
-        //mSlidingTabLayout.setViewPager(mViewPager);
-
-        tProjects = (TextView) mProtocoder.mActivityContext.findViewById(R.id.textProjects);
-        tExamples = (TextView) mProtocoder.mActivityContext.findViewById(R.id.textExamples);
-
-        tProjects.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectProjects();
-                goTo("projects");
-            }
-        });
-
-        tExamples.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectExamples();
-                goTo("examples");
-            }
-        });
-
-        //TODO remove at some point
-        //colors
-        //final int c0 = mProtocoder.mActivityContext.getResources().getColor(R.color.project_user_color);
-        // final int c1 = mProtocoder.mActivityContext.getResources().getColor(R.color.project_example_color);
 
 
-        mViewPager.setOnPageChangeListener(new ViewPager.OnPageChangeListener() {
-
-            @Override
-            public void onPageSelected(int page) {
-                switch (page) {
-                    case 0:
-                        selectProjects();
-                        break;
-                    case 1:
-                        selectExamples();
-                        break;
-                }
-            }
-
-            @Override
-            public void onPageScrolled(int arg0, float arg1, int arg2) {
-                //   int c = AndroidUtils.calculateColor(arg0 + arg1, c0, c1);
-                //   groupedToolbar.setBackgroundColor(c);
-            }
-
-            @Override
-            public void onPageScrollStateChanged(int arg0) {
-            }
-        });
     }
 
     public java.util.ArrayList<Project> getProjectsInFolder(String folder) {
@@ -159,7 +78,7 @@ public class ProtoScripts {
         final ProjectListFragment plf = mProjectPagerAdapter.getFragmentByName(folder);
         final int id = plf.findAppPosByName(appName);
 
-        PUtil util = new PUtil(mProtocoder.mActivityContext);
+        PUtil util = new PUtil(mProtocoder.mContext);
 
         util.delay(200, new PUtil.delayCB() {
             @Override
@@ -230,44 +149,24 @@ public class ProtoScripts {
     public void run(String folder, String appName) {
         //close app if open
         if (currentProjectApplicationIntent != null) {
-            mProtocoder.mActivityContext.finishActivity(mProjectRequestCode);
+
+            //cerramos servicio
+            Events.ProjectEvent evt = new Events.ProjectEvent(null, "stop");
+            EventBus.getDefault().post(evt);
+
             currentProjectApplicationIntent = null;
         }
 
         if (appName.toLowerCase().endsWith("service")) {
-            currentProjectApplicationIntent = new Intent(mProtocoder.mActivityContext, AppRunnerService.class);
+            currentProjectApplicationIntent = new Intent(mProtocoder.mContext, AppRunnerService.class);
             currentProjectApplicationIntent.putExtra(Project.FOLDER, folder);
             currentProjectApplicationIntent.putExtra(Project.NAME, appName);
 
-            mProtocoder.mActivityContext.startService(currentProjectApplicationIntent);
+            mProtocoder.mContext.startService(currentProjectApplicationIntent);
         } else {
             //open new activity
             try {
-                currentProjectApplicationIntent = new Intent(mProtocoder.mActivityContext, AppRunnerActivity.class);
 
-                if (AndroidUtils.isVersionLollipop()) {
-                    //TODO enable version Android-L
-                    //currentProjectApplicationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-                } else {
-                    currentProjectApplicationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                }
-
-                //settings
-                currentProjectApplicationIntent.putExtra(Project.SETTINGS_SCREEN_ALWAYS_ON, mProtocoder.settings.getScreenOn());
-
-                //set the folder and app name to be loaded
-                currentProjectApplicationIntent.putExtra(Project.FOLDER, folder);
-                currentProjectApplicationIntent.putExtra(Project.NAME, appName);
-
-                currentProjectApplicationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-                //currentProjectApplicationIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                currentProjectApplicationIntent.addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
-
-                //load the custom js interpreter if exists with the webide
-                currentProjectApplicationIntent.putExtra(Project.PREFIX, EditorManager.getInstance().getCustomJSInterpreterIfExist(mProtocoder.mActivityContext));
-
-                mProtocoder.mActivityContext.overridePendingTransition(R.anim.splash_slide_in_anim_set, R.anim.splash_slide_out_anim_set);
-                mProtocoder.mActivityContext.startActivityForResult(currentProjectApplicationIntent, mProjectRequestCode);
             } catch (Exception e) {
                 MLog.d(TAG, "Error launching script");
             }
@@ -277,7 +176,7 @@ public class ProtoScripts {
     //TODO
     public void createProject(String folder, String appName) {
         //create file
-        Project newProject = ProjectManager.getInstance().addNewProject(mProtocoder.mActivityContext, appName, folder, appName);
+        Project newProject = ProjectManager.getInstance().addNewProject(mProtocoder.mContext, appName, folder, appName);
 
         //notify ui
         final ProjectListFragment plf = mProjectPagerAdapter.getFragmentByName(folder);
@@ -304,19 +203,6 @@ public class ProtoScripts {
         return zipFilePath;
     }
 
-    public void createProjectDialog() {
-        FragmentManager fm = mProtocoder.mActivityContext.getSupportFragmentManager();
-        NewProjectDialogFragment newProjectDialog = new NewProjectDialogFragment();
-        newProjectDialog.show(fm, "fragment_edit_name");
-        // implements NewProjectDialogFragment.NewProjectDialogListener
-        newProjectDialog.setListener(new NewProjectDialogFragment.NewProjectDialogListener() {
-            @Override
-            public void onFinishEditDialog(String inputText) {
-                Toast.makeText(mProtocoder.mActivityContext, "Creating " + inputText, Toast.LENGTH_SHORT).show();
-                createProject(ProjectManager.FOLDER_USER_PROJECTS, inputText);
-            }
-        });
-    }
 
 
     public void listRefresh() {
@@ -325,79 +211,7 @@ public class ProtoScripts {
         }
     }
 
-    public void shareProtoFileDialog(String folder, String name) {
-        final ProgressDialog progress = new ProgressDialog(mProtocoder.mActivityContext);
-        progress.setTitle("Exporting .proto");
-        progress.setMessage("Your project will be ready soon!");
-        progress.setCancelable(true);
-        progress.setCanceledOnTouchOutside(false);
-        progress.show();
 
-        String zipFilePath = exportProto(folder, name);
-
-        Intent shareIntent = new Intent();
-        shareIntent.setAction(Intent.ACTION_SEND);
-        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(zipFilePath)));
-        shareIntent.setType("application/zip");
-
-        progress.dismiss();
-
-        mProtocoder.mActivityContext.startActivity(Intent.createChooser(shareIntent, mProtocoder.mActivityContext.getResources().getText(R.string.share_proto_file)));
-    }
-
-    public void shareMainJsDialog(String folder, String name) {
-        Project p = ProjectManager.getInstance().get(folder, name);
-        Intent sendIntent = new Intent();
-        sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TEXT, ProjectManager.getInstance().getCode(p));
-        sendIntent.setType("text/plain");
-        mProtocoder.mActivityContext.startActivity(Intent.createChooser(sendIntent, mProtocoder.mActivityContext.getResources().getText(R.string.send_to)));
-    }
-
-    public void addShortcut(String folder, String name) {
-        Project p = ProjectManager.getInstance().get(folder, name);
-
-        Intent.ShortcutIconResource icon;
-        //TODO remove this way of selecting icons
-        if (folder.equals("examples")) {
-            icon = Intent.ShortcutIconResource.fromContext(mProtocoder.mActivityContext, R.drawable.protocoder_script_example);
-        } else {
-            icon = Intent.ShortcutIconResource.fromContext(mProtocoder.mActivityContext, R.drawable.protocoder_script_project);
-        }
-
-        try {
-            Intent shortcutIntent = new Intent(mProtocoder.mActivityContext, AppRunnerActivity.class);
-            shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            shortcutIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-            String script = ProjectManager.getInstance().getCode(p);
-            shortcutIntent.putExtra(Project.NAME, p.getName());
-            shortcutIntent.putExtra(Project.FOLDER, p.getFolder());
-
-            final Intent putShortCutIntent = new Intent();
-
-            putShortCutIntent.putExtra(Intent.EXTRA_SHORTCUT_INTENT, shortcutIntent);
-            putShortCutIntent.putExtra(Intent.EXTRA_SHORTCUT_NAME, p.getName());
-            putShortCutIntent.putExtra(Intent.EXTRA_SHORTCUT_ICON_RESOURCE, icon);
-            putShortCutIntent.setAction("com.android.launcher.action.INSTALL_SHORTCUT");
-            mProtocoder.mActivityContext.sendBroadcast(putShortCutIntent);
-        } catch (Exception e) {
-            // TODO
-        }
-        // Show toast
-        Toast.makeText(mProtocoder.mActivityContext, "Adding shortcut for " + p.getName(), Toast.LENGTH_SHORT).show();
-    }
-
-    public void reinitScriptList() {
-        mProjectPagerAdapter.addFragment("", (ProjectListFragment) getFragment(0));
-        mProjectPagerAdapter.addFragment("", (ProjectListFragment) getFragment(1));
-        mProjectPagerAdapter.notifyDataSetChanged();
-    }
-
-
-    private Fragment getFragment(int position) {
-        return mProtocoder.mActivityContext.getSupportFragmentManager().findFragmentByTag(getFragmentTag(position));
-    }
 
     private String getFragmentTag(int position) {
         return "android:switcher:" + R.id.pager + ":" + position;

@@ -25,7 +25,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Toast;
 
-import org.protocoder.MainActivity;
+import org.protocoder.MainService;
 import org.protocoder.R;
 import org.protocoder.appApi.Protocoder;
 import org.protocoderrunner.base.BaseActivity;
@@ -60,13 +60,15 @@ public class LauncherActivity extends BaseActivity {
             intent = new Intent(this, WelcomeActivity.class);
             Protocoder.getInstance(this).settings.setId(StrUtils.generateRandomString());
             Protocoder.getInstance(this).settings.setConnectionAlert(true);
+            startActivity(intent);
         } else {
-            intent = new Intent(this, MainActivity.class);
+            intent = new Intent(this, MainService.class);
+            startService(intent);
            // intent.putExtras();
         }
 
-        intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-        startActivity(intent);
+        //intent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+        //startService(intent);
         finish();
 
     }

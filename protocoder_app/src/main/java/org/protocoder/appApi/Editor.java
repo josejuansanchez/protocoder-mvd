@@ -21,7 +21,6 @@ package org.protocoder.appApi;
 
 import android.os.Bundle;
 
-import org.protocoder.R;
 import org.protocoder.fragments.EditorFragment;
 import org.protocoderrunner.project.Project;
 import org.protocoderrunner.project.ProjectManager;
@@ -48,9 +47,9 @@ public class Editor {
 
                 editorFragment.setArguments(bundle);
             }
-            protocoder.mActivityContext.addFragment(editorFragment, R.id.fragmentEditor, "editorFragment", true);
+            //protocoder.mActivityContext.addFragment(editorFragment, R.id.fragmentEditor, "editorFragment", true);
         } else {
-            protocoder.mActivityContext.removeFragment(editorFragment);
+            //protocoder.mActivityContext.removeFragment(editorFragment);
             editorFragment = null;
         }
     }

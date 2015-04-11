@@ -257,13 +257,13 @@ public class ProjectItem extends LinearLayout {
                             .setNegativeButton("No", dialogClickListener).show();
                     return true;
                 } else if (itemId == R.id.menu_project_list_add_shortcut) {
-                    Protocoder.getInstance(c).protoScripts.addShortcut(mProject.getFolder(), mProject.getName());
+                    //Protocoder.getInstance(c).protoScripts.addShortcut(mProject.getFolder(), mProject.getName());
                     return true;
                 } else if (itemId == R.id.menu_project_list_share_with) {
-                    Protocoder.getInstance(c).protoScripts.shareMainJsDialog(mProject.getFolder(), mProject.getName());
+                    //Protocoder.getInstance(c).protoScripts.shareMainJsDialog(mProject.getFolder(), mProject.getName());
                     return true;
                 } else if (itemId == R.id.menu_project_list_share_proto_file) {
-                    Protocoder.getInstance(c).protoScripts.shareProtoFileDialog(mProject.getFolder(), mProject.getName());
+                    //Protocoder.getInstance(c).protoScripts.shareProtoFileDialog(mProject.getFolder(), mProject.getName());
                     return true;
                 } else {
                     return false;

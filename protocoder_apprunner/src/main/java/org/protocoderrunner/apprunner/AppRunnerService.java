@@ -308,6 +308,15 @@ public class AppRunnerService extends Service {
         //EventBus.getDefault().unregister(this);
     }
 
+    public void onEventMainThread(Events.ProjectEvent evt) {
+        // Using transaction so the view blocks
+        MLog.d(TAG, "event -> " + evt.getAction());
+
+        if (evt.getAction() == "stop") {
+            stopSelf();
+        }
+    }
+
 
     // execute lines
     public void onEventMainThread(Events.ExecuteCodeEvent evt) {
