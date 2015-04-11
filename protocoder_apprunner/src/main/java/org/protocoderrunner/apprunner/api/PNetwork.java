@@ -53,6 +53,7 @@ import org.protocoderrunner.apidoc.annotation.ProtoMethodParam;
 import org.protocoderrunner.apprunner.AppRunnerFragment;
 import org.protocoderrunner.apprunner.PInterface;
 import org.protocoderrunner.apprunner.api.network.PBluetooth;
+import org.protocoderrunner.apprunner.api.network.PBluetoothLe;
 import org.protocoderrunner.apprunner.api.network.PFtpClient;
 import org.protocoderrunner.apprunner.api.network.PFtpServer;
 import org.protocoderrunner.apprunner.api.network.PSocketIOClient;
@@ -696,6 +697,12 @@ public class PNetwork extends PInterface {
         return ftpClient;
     }
 
+    public PBluetoothLe startBLE() {
+
+        PBluetoothLe pBluetoothLe = new PBluetoothLe(getContext());
+
+        return pBluetoothLe;
+    }
 
     public void stop() {
 
