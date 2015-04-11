@@ -30,6 +30,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import org.protocoder.MainActivity;
+import org.protocoder.MainService;
 import org.protocoder.R;
 import org.protocoder.appApi.Protocoder;
 import org.protocoderrunner.project.ProjectManager;
@@ -155,10 +156,14 @@ public class WelcomeActivity extends AppBaseActivity {
                 // Write mContext shared pref to never come back here
                 SharedPreferences userDetails = getSharedPreferences("org.protocoder", MODE_PRIVATE);
                 userDetails.edit().putBoolean(getResources().getString(R.string.pref_is_first_launch), false).commit();
+
+                // Start the MainService
+                startService(new Intent(WelcomeActivity.this, MainService.class));
+
                 // Start the activity
-                Intent i = new Intent(WelcomeActivity.this, MainActivity.class);
-                i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(i);
+                //Intent i = new Intent(WelcomeActivity.this, MainActivity.class);
+                //i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                //startActivity(i);
             }
         });
 

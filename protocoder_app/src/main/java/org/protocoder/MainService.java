@@ -21,23 +21,17 @@
 package org.protocoder;
 
 import android.annotation.SuppressLint;
+import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
-import android.os.Bundle;
 import android.os.FileObserver;
-import android.support.v4.app.Fragment;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.os.IBinder;
+import android.util.Log;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
-import android.widget.AdapterView.AdapterContextMenuInfo;
 
-import org.protocoder.activities.AppBaseActivity;
 import org.protocoder.appApi.Protocoder;
 import org.protocoderrunner.apprunner.AppRunnerContext;
 import org.protocoderrunner.events.Events;
@@ -53,12 +47,11 @@ import java.lang.reflect.Field;
 import de.greenrobot.event.EventBus;
 
 @SuppressLint("NewApi")
-public class MainActivity extends AppBaseActivity {
+public class MainService extends Service {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "MainService";
 
-    MainActivity mContext;
-    Menu mMenu;
+    MainService mContext;
 
     // file observer
     private FileObserver fileObserver;
@@ -72,19 +65,11 @@ public class MainActivity extends AppBaseActivity {
 
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    public void onCreate() {
+        super.onCreate();
         mContext = this;
 
-
-        //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-        //    Window w = getWindow(); // in Activity's onCreate() for instance
-        //    w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION, WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
-        //    w.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS, WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        //}
-
-        setContentView(R.layout.activity_main);
-        setToolbar();
+        Log.d(TAG, "onCreate");
 
         mProtocoder = Protocoder.getInstance(this);
         mProtocoder.init();
@@ -96,11 +81,11 @@ public class MainActivity extends AppBaseActivity {
         *  Views
         */
 
-        if (savedInstanceState == null) {
-            addFragments();
-        } else {
-            //mProtocoder.protoScripts.reinitScriptList();
-        }
+        //if (savedInstanceState == null) {
+        //    addFragments();
+        //} else {
+        //    mProtocoder.protoScripts.reinitScriptList();
+        //}
 
         // Check when mContext file is changed in the protocoder dir
         fileObserver = new FileObserver(ProjectManager.FOLDER_USER_PROJECTS, FileObserver.CREATE | FileObserver.DELETE) {
@@ -123,40 +108,10 @@ public class MainActivity extends AppBaseActivity {
 
         connectivityChangeReceiver = new ConnectivityChangeReceiver();
 
-        // Start the MainService
-        startService(new Intent(this, MainService.class));
-    }
+        // ***** onResume code ******
+        Log.d(TAG, "onResume");
 
-    private void addFragments() {
-        MLog.d(TAG, "fragments adding ");
-
-        //colors
-        final int c0 = getResources().getColor(R.color.project_user_color);
-        final int c1 = getResources().getColor(R.color.project_example_color);
-
-        mProtocoder.protoScripts.addScriptList(R.drawable.protocoder_script_project, "projects", c0, false);
-        mProtocoder.protoScripts.addScriptList(R.drawable.protocoder_script_example, "examples", c1, true);
-
-        MLog.d(TAG, "fragments added ");
-    }
-
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
-
-    /**
-     * onResume
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        //set settings
-        setScreenAlwaysOn(mProtocoder.settings.getScreenOn());
-
-        MLog.d(TAG, "Registering as an EventBus listener in MainActivity");
+        MLog.d(TAG, "Registering as an EventBus listener in MainService");
 
         // TEST
         if (!EventBus.getDefault().isRegistered(this)) {
@@ -192,14 +147,20 @@ public class MainActivity extends AppBaseActivity {
         }
 
         IDEcommunication.getInstance(this).ready(false);
+
+
+
     }
 
     /**
-     * onPause
+     * onDestroy
      */
     @Override
-    protected void onPause() {
-        super.onPause();
+    public void onDestroy() {
+        super.onDestroy();
+
+
+        Log.d(TAG, "onDestroy");
 
         // TEST
         //EventBus.getDefault().unregister(this);
@@ -208,22 +169,23 @@ public class MainActivity extends AppBaseActivity {
         fileObserver.stopWatching();
         unregisterReceiver(connectivityChangeReceiver);
 
-    }
-
-    /**
-     * onDestroy
-     */
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        ViewGroup vg = (ViewGroup) findViewById(R.layout.activity_main);
-        if (vg != null) {
-            vg.invalidate();
-            vg.removeAllViews();
-        }
         mProtocoder.app.killConnections();
     }
 
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+
+        Log.d(TAG, "onStartCommand");
+
+        // If we get killed, after returning from here, restart
+        //return START_NOT_STICKY;
+        return START_STICKY;
+    }
 
     // TODO call intent and kill it in an appropiate way
     public void onEventMainThread(ProjectEvent evt) {
@@ -235,7 +197,7 @@ public class MainActivity extends AppBaseActivity {
             mProtocoder.protoScripts.run(p.getFolder(), p.getName());
         } else if (evt.getAction() == "save") {
             Project p = evt.getProject();
-            mProtocoder.protoScripts.refresh(p.getFolder(), p.getName());
+            //mProtocoder.protoScripts.refresh(p.getFolder(), p.getName());
         } else if (evt.getAction() == "new") {
             MLog.d(TAG, "creating new project " + evt.getProject().getName());
             mProtocoder.protoScripts.createProject("projects", evt.getProject().getName());
@@ -254,84 +216,6 @@ public class MainActivity extends AppBaseActivity {
         // if (debugApp) {
         //     interp.eval(code);
         // }
-    }
-
-    public void onEventMainThread(Events.SelectedProjectEvent evt) {
-        String folder = evt.getFolder();
-        String name = evt.getName();
-
-        mProtocoder.protoScripts.goTo(folder, name);
-        mProtocoder.protoScripts.resetHighlighting(folder);
-        mProtocoder.protoScripts.highlight(folder, name);
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_activity_menu, menu);
-
-        mMenu = menu;
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        AdapterContextMenuInfo info = (AdapterContextMenuInfo) item.getMenuInfo();
-
-        int itemId = item.getItemId();
-        if (itemId == android.R.id.home) {
-            return true;
-        } else if (itemId == R.id.menu_new) {
-          //  Protocoder.getInstance(this).protoScripts.createProjectDialog();
-            return true;
-        } else if (itemId == R.id.menu_help) {
-            //Protocoder.getInstance(this).app.showHelp(true);
-            return true;
-        } else if (itemId == R.id.menu_settings) {
-            //Protocoder.getInstance(this).app.showSettings(true);
-            return true;
-        } else {
-            return super.onOptionsItemSelected(item);
-        }
-    }
-
-    /*
-     * Key management
-     */
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent evt) {
-        MLog.d("BACK BUTTON", "Back button was pressed");
-        if (keyCode == 4) {
-            Fragment fragment = getSupportFragmentManager().findFragmentByTag("editorFragment");
-            if (fragment != null && fragment.isVisible()) {
-                MLog.d(TAG, "Removing editor");
-                removeFragment(fragment);
-                return true;
-            } else {
-                finish();
-                return true;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-
-        if (event.getAction() == KeyEvent.ACTION_DOWN && event.isCtrlPressed()) {
-
-            int keyCode = event.getKeyCode();
-            switch (keyCode) {
-                case KeyEvent.KEYCODE_R:
-                    MLog.d(TAG, "run app");
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-        return super.dispatchKeyEvent(event);
     }
 
     // check if connection has changed
