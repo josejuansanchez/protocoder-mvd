@@ -24,16 +24,20 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.os.Handler;
+import android.util.Log;
 
 import org.protocoderrunner.apidoc.annotation.ProtoMethod;
 import org.protocoderrunner.apidoc.annotation.ProtoMethodParam;
 import org.protocoderrunner.apprunner.PInterface;
 import org.protocoderrunner.apprunner.api.other.WhatIsRunning;
+import org.protocoderrunner.utils.MLog;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +61,8 @@ public class PBluetoothLe extends PInterface {
     private callBackNewData mcallBackNewData;
     private callBackconnected mCallBackconnected;
 
+    static final String PROTO_TAG="PROTOBLE";
+
     //Callback that control the Functionality of scan devices.
     private BluetoothAdapter.LeScanCallback mScanCallback= new BluetoothAdapter.LeScanCallback() {
         @Override
@@ -77,8 +83,10 @@ public class PBluetoothLe extends PInterface {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
            if(mCallBackconnected!=null){
-               mCallBackconnected.event(status==0);
+
                connected=(status==0);
+               mGatt.discoverServices();
+               MLog.i(PROTO_TAG,"CONNECTED");
            }
         }
 
@@ -86,8 +94,25 @@ public class PBluetoothLe extends PInterface {
         public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
            if(mcallBackNewData!=null){
                byte[] data = characteristic.getValue();
-               mcallBackNewData.event(data);
+
+               boolean mFirstPacket = (data[0] & 0x80) == 0x80;
+               int mMessageCount = (((data[0] & 0x60) >> 5));
+               int mPendingCount = (data[0] & 0x1f);
+               byte[] mPacket = data;
+               ByteBuffer buffer = ByteBuffer.allocate(2);
+               buffer.put(data[5]);
+               buffer.put(data[6]);
+               byte[] data2 = buffer.array();
+               MLog.i(PROTO_TAG,"CHANGING..."+new String(data2));
+               mcallBackNewData.event(data2);
+
            }
+        }
+
+        @Override
+        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+            MLog.i(PROTO_TAG,"Service Discovered");
+            mCallBackconnected.event(status==0);
         }
     };
     //Interface that controls the new data event
@@ -102,7 +127,8 @@ public class PBluetoothLe extends PInterface {
         super(context);
         this.mDevices= new ArrayList<BluetoothDevice>();
         this.mAdapter= ((BluetoothManager)context.getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
-
+        MLog.d(PROTO_TAG, "Initializated");
+        this.context=context;
         WhatIsRunning.getInstance().add(this);
     }
 
@@ -111,10 +137,10 @@ public class PBluetoothLe extends PInterface {
     public List<BluetoothDevice> scan(){
         return scan(SCAN_TIMEOUT);
     }
-    @ProtoMethod(description = "Scan Bluetooth Devices During 10 Seconds")
+    @ProtoMethod(description = "Scan Bluetooth Devices for the especific miliseconds")
     @ProtoMethodParam(params = {"milis"})
     public List<BluetoothDevice> scan(Long milis){
-
+        MLog.d(PROTO_TAG,"Scanning Devices");
         Handler handler = new Handler();
         mAdapter.startLeScan(this.mScanCallback);
         handler.postDelayed(SearchDevices,milis);
@@ -127,6 +153,8 @@ public class PBluetoothLe extends PInterface {
         currentDevice=mAdapter.getRemoteDevice(address);
         mGatt= currentDevice.connectGatt(context, true, mbluetoothListener);
         this.mCallBackconnected=callback;
+        MLog.i(PROTO_TAG,"CONECTING...");
+
         connected = true;
     }
     @ProtoMethod(description = "Show if is connected")
@@ -153,9 +181,12 @@ public class PBluetoothLe extends PInterface {
 
         BluetoothGattCharacteristic characteristic=service.getCharacteristic(UUID.fromString(uuidCharaceristic));
         mGatt.setCharacteristicNotification(characteristic,true);
-        mGatt.writeCharacteristic(characteristic);
+        for (BluetoothGattDescriptor bluetoothGattDescriptor : characteristic.getDescriptors()) {
+            bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+            mGatt.writeDescriptor(bluetoothGattDescriptor);
+        }
         this.mcallBackNewData=callback;
-
+        MLog.i(PROTO_TAG,"LISTENING...");
     }
 
 

@@ -697,9 +697,14 @@ public class PNetwork extends PInterface {
 
         return ftpClient;
     }
-
+    @ProtoMethod(description = "Initialize Bluetooth Low Energy System")
+    @ProtoMethodParam(params = {})
     public PBluetoothLe startBLE() {
 
+        //PNetwork p=null;
+        //p.startBLE();
+
+        Log.i("PROTOBLE","STARTING BLE");
         PBluetoothLe pBluetoothLe = new PBluetoothLe(getContext());
 
         return pBluetoothLe;
