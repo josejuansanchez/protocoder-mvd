@@ -29,7 +29,6 @@ import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.os.Handler;
-import android.util.Log;
 
 import org.protocoderrunner.apidoc.annotation.ProtoMethod;
 import org.protocoderrunner.apidoc.annotation.ProtoMethodParam;
@@ -104,7 +103,7 @@ public class PBluetoothLe extends PInterface {
                buffer.put(data[6]);
                byte[] data2 = buffer.array();
                MLog.i(PROTO_TAG,"CHANGING..."+new String(data2));
-               mcallBackNewData.event(data2);
+               mcallBackNewData.event(new String(data2));
 
            }
         }
@@ -117,7 +116,7 @@ public class PBluetoothLe extends PInterface {
     };
     //Interface that controls the new data event
     public interface callBackNewData{
-        public void event(byte[] data);
+        public void event(String data);
     }
     //Interfaz that control the Conection
     public interface callBackconnected{
